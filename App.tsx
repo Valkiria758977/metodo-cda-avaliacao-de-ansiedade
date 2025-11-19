@@ -1,5 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid, LabelList } from 'recharts';
+import React, { useState, useEffect, useMemo } from 'react';
+import { 
+    BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid, LabelList,
+    AreaChart, Area, ReferenceLine
+} from 'recharts';
 import { 
     THEME, 
     TEST_DATA, 
@@ -113,24 +116,43 @@ export default function App() {
         return "from-emerald-400 to-emerald-600";
     };
 
+    // Dados formatados para o gráfico de histórico (cronológico)
+    const historyChartData = useMemo(() => {
+        if (!state.history || state.history.length === 0) return [];
+        // Cria uma cópia e inverte para ficar cronológico (antigo -> novo)
+        return [...state.history].reverse().map(h => ({
+            ...h,
+            shortDate: new Date(h.date as string).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
+            fullDate: new Date(h.date as string).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit' })
+        }));
+    }, [state.history]);
+
     const CustomTooltip = ({ active, payload, label }: any) => {
         if (active && payload && payload.length) {
             const val = payload[0].value;
             let status = "Baixa Ansiedade";
             let color = "#34D399";
-            if (val > 5) { status = "Atenção"; color = "#FBBF24"; }
-            if (val > 10) { status = "Alta Ansiedade"; color = "#EF4444"; }
+            if (val > 30) { status = "Ansiedade Moderada"; color = "#FBBF24"; }
+            if (val > 60) { status = "Ansiedade Grave"; color = "#EF4444"; }
 
             return (
-                <div className="bg-cda-green/90 backdrop-blur-md border border-cda-gold p-3 rounded-lg shadow-xl">
-                    <p className="font-bold text-white mb-1">{label}</p>
-                    <p className="text-sm text-gray-200">Pontuação: <span className="font-bold text-white text-lg">{val}</span>/15</p>
+                <div className="bg-white border border-cda-green/20 p-3 rounded-lg shadow-xl z-50 text-cda-green">
+                    <p className="text-xs text-gray-500 mb-1">{payload[0].payload.fullDate}</p>
+                    <p className="text-sm">Pontuação: <span className="font-bold text-lg" style={{ color }}>{val}</span>/75</p>
                     <p className="text-xs uppercase tracking-wider font-bold mt-1" style={{ color }}>{status}</p>
                 </div>
             );
         }
         return null;
     };
+
+    const gradientOffset = () => {
+        return {
+            critico: 0.2, // 60pts
+            alerta: 0.6   // 30pts
+        };
+    };
+    const off = gradientOffset();
 
     if (state.loading) return (
         <div className="min-h-screen flex items-center justify-center bg-cda-bg text-cda-gold">
@@ -142,12 +164,12 @@ export default function App() {
     );
 
     return (
-        <div className="min-h-screen font-sans flex flex-col bg-cda-bg text-white">
+        <div className="min-h-screen font-sans flex flex-col bg-cda-bg text-cda-text">
             {/* Header */}
-            <header className="sticky top-0 z-40 shadow-lg bg-cda-green border-b border-cda-greenLight/50 transition-all duration-300">
+            <header className="sticky top-0 z-40 shadow-lg bg-cda-green border-b border-cda-gold/20 transition-all duration-300">
                 <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
                     <div className="flex items-center gap-4 md:gap-6">
-                         <div className={`h-16 w-16 md:h-20 md:w-20 rounded-full flex items-center justify-center overflow-hidden border-2 border-cda-gold shadow-lg shrink-0 ${URL_DA_LOGO && !logoError ? 'bg-cda-green' : 'bg-white/10 text-yellow-400'}`}>
+                         <div className={`h-16 w-16 md:h-20 md:w-20 rounded-full flex items-center justify-center overflow-hidden border-2 border-cda-gold shadow-lg shrink-0 bg-cda-green`}>
                             {URL_DA_LOGO && !logoError ? (
                                 <img 
                                     src={URL_DA_LOGO} 
@@ -168,7 +190,7 @@ export default function App() {
                             <p className="text-sm md:text-base uppercase tracking-wider opacity-90 text-cda-gold font-bold mt-1">Avaliação de Ansiedade</p>
                         </div>
                     </div>
-                    <div className="text-xs opacity-60 text-right hidden md:block">
+                    <div className="text-xs opacity-60 text-right hidden md:block text-white">
                         {state.isOffline ? 'Modo Local' : 'Conectado'}
                     </div>
                 </div>
@@ -180,9 +202,9 @@ export default function App() {
                     <>
                         <ProgressBar current={Object.keys(state.answers).length} total={25} />
                         <main className="max-w-3xl mx-auto p-4 pt-8 space-y-8 pb-32">
-                            <Card className="border-l-4 border-cda-gold bg-cda-card">
+                            <Card className="border-l-4 border-cda-gold">
                                 <h2 className="text-lg font-bold mb-2 text-cda-gold">Orientação ao Paciente</h2>
-                                <p className="text-sm text-cda-muted">
+                                <p className="text-sm text-gray-200">
                                     Leia cada afirmação e marque de 0 a 3 o quanto ela descreve sua experiência atual.
                                     <br/><span className="font-bold mt-2 block text-white">0 – Nunca | 1 – Às vezes | 2 – Frequentemente | 3 – Quase sempre</span>
                                 </p>
@@ -190,7 +212,7 @@ export default function App() {
 
                             {TEST_DATA.map((block, bIdx) => (
                                 <div key={bIdx}>
-                                    <div className="flex items-baseline border-b pb-2 mb-4 border-cda-greenLight/50">
+                                    <div className="flex items-baseline border-b pb-2 mb-4 border-cda-gold/30">
                                         <h3 className="text-xl font-bold font-serif mr-3 text-white">{block.title}</h3>
                                     </div>
                                     <div className="space-y-4">
@@ -198,9 +220,9 @@ export default function App() {
                                             const globalIdx = bIdx * 5 + qIdx;
                                             const answered = state.answers[globalIdx] !== undefined;
                                             return (
-                                                <Card key={globalIdx} className={`transition-all ${answered ? 'shadow-md border-cda-gold' : 'border-cda-greenLight/30'}`} style={{ borderWidth: '1px' }}>
+                                                <Card key={globalIdx} className={`transition-all ${answered ? 'shadow-md border-cda-gold' : 'border-white/10'}`} style={{ borderWidth: '1px' }}>
                                                     <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                                                        <p className="font-medium flex-1 text-white/90">{q}</p>
+                                                        <p className="font-medium flex-1 text-gray-100">{q}</p>
                                                         <div className="flex gap-2">
                                                             {[0, 1, 2, 3].map(val => (
                                                                 <button
@@ -209,8 +231,8 @@ export default function App() {
                                                                     className={`w-10 h-10 rounded-lg font-bold transition-all flex items-center justify-center border`}
                                                                     style={{
                                                                         backgroundColor: state.answers[globalIdx] === val ? THEME.gold : 'transparent',
-                                                                        color: state.answers[globalIdx] === val ? THEME.green : '#A7F3D0',
-                                                                        borderColor: state.answers[globalIdx] === val ? THEME.gold : '#2C6E58',
+                                                                        color: state.answers[globalIdx] === val ? THEME.green : THEME.white,
+                                                                        borderColor: state.answers[globalIdx] === val ? THEME.gold : 'rgba(255,255,255,0.3)',
                                                                         transform: state.answers[globalIdx] === val ? 'scale(1.1)' : 'scale(1)'
                                                                     }}
                                                                 >
@@ -227,7 +249,7 @@ export default function App() {
                             ))}
                         </main>
 
-                        <div className="fixed bottom-0 left-0 w-full p-4 bg-cda-green/95 backdrop-blur-md border-t border-cda-greenLight shadow-2xl flex justify-center gap-4 z-50">
+                        <div className="fixed bottom-0 left-0 w-full p-4 bg-cda-green/95 backdrop-blur-md border-t border-cda-gold/30 shadow-2xl flex justify-center gap-4 z-50">
                             <Button variant="secondary" onClick={() => setState(s => ({ ...s, view: 'history' }))} icon={Icons.History}>
                                 Histórico
                             </Button>
@@ -247,41 +269,34 @@ export default function App() {
                     <main className="max-w-3xl mx-auto p-4 pt-8 animate-fade-in">
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-2xl font-bold font-serif text-white">Resultado</h2>
-                            <Button variant="secondary" onClick={() => setState(s => ({ ...s, view: 'test' }))} icon={Icons.Back}>Voltar</Button>
+                            <Button variant="outline" onClick={() => setState(s => ({ ...s, view: 'test' }))} icon={Icons.Back}>Voltar</Button>
                         </div>
 
-                        <div className="rounded-2xl p-8 text-center shadow-lg mb-8 border-2" style={{ backgroundColor: state.result.colorBg, borderColor: state.result.colorText }}>
+                        <div className="rounded-2xl p-8 text-center shadow-lg mb-8 border-2 bg-white" style={{ borderColor: state.result.colorText }}>
                             <p className="text-sm font-bold uppercase tracking-widest opacity-70 mb-2" style={{ color: state.result.colorText }}>Pontuação Total</p>
                             <div className="text-7xl font-bold font-serif mb-2" style={{ color: state.result.colorText }}>
                                 {state.result.totalScore}<span className="text-3xl opacity-50 font-sans">/75</span>
                             </div>
-                            <div className="inline-block px-4 py-1 rounded-full bg-white/10 backdrop-blur-sm font-bold border border-white/20" style={{ color: state.result.colorText }}>
+                            <div className="inline-block px-4 py-1 rounded-full bg-gray-100 font-bold border border-gray-200" style={{ color: state.result.colorText }}>
                                 {state.result.level}
                             </div>
                         </div>
 
-                        <Card className="mb-8 border-l-4 border-cda-gold">
-                            <h3 className="font-bold text-lg mb-3 flex items-center text-cda-gold">
-                                <span className="mr-2">💡</span> Sugestões Terapêuticas
-                            </h3>
-                            <p className="text-white/90 leading-relaxed">{state.result.suggestions}</p>
-                        </Card>
-
-                        <Card>
-                            <h3 className="font-bold text-lg mb-6 text-white">Análise por Dimensão</h3>
+                        <Card className="mb-8">
+                            <h3 className="font-bold text-lg mb-6 text-cda-gold">Análise por Dimensão</h3>
                             
                             {/* Mobile View: Bars */}
                             <div className="block md:hidden space-y-6">
                                 {Object.entries(state.result.blockScores).map(([key, val], idx) => (
                                     <div key={key}>
                                         <div className="flex justify-between items-end mb-2">
-                                            <span className="text-sm text-white/90 font-medium">{TEST_DATA[idx].title.split('—')[1]}</span>
-                                            <span className="text-xs font-bold text-cda-gold bg-black/20 px-2 py-1 rounded">{val}/15</span>
+                                            <span className="text-sm text-gray-200 font-medium">{TEST_DATA[idx].title.split('—')[1]}</span>
+                                            <span className="text-xs font-bold text-cda-green bg-cda-gold px-2 py-1 rounded">{val}/15</span>
                                         </div>
-                                        <div className="h-3 bg-black/20 rounded-full overflow-hidden border border-white/5 relative">
+                                        <div className="h-3 bg-white/10 rounded-full overflow-hidden border border-white/10 relative">
                                             {/* Grid lines for mobile bars */}
-                                            <div className="absolute top-0 left-1/3 w-px h-full bg-white/10"></div>
-                                            <div className="absolute top-0 left-2/3 w-px h-full bg-white/10"></div>
+                                            <div className="absolute top-0 left-1/3 w-px h-full bg-white/20"></div>
+                                            <div className="absolute top-0 left-2/3 w-px h-full bg-white/20"></div>
                                             
                                             <div 
                                                 className={`h-full transition-all duration-1000 bg-gradient-to-r ${getBarGradientClass(val as number)}`}
@@ -340,9 +355,28 @@ export default function App() {
                             </div>
                         </Card>
 
+                        <Card className="mb-8 border-l-4 border-cda-gold">
+                            <h3 className="font-bold text-lg mb-3 flex items-center text-cda-gold">
+                                <span className="mr-2">💡</span> Sugestões Terapêuticas
+                            </h3>
+                            <p className="text-gray-200 leading-relaxed">{state.result.suggestions}</p>
+                        </Card>
+
+                        <div className="mt-8 mb-2 text-center animate-fade-in-up">
+                            <a 
+                                href="https://instagram.com/valkiriavaleriopsi" 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 text-cda-gold hover:text-white transition-all hover:scale-105 font-medium text-lg px-4 py-2 rounded-lg hover:bg-white/5"
+                            >
+                                <Icons.Instagram />
+                                @valkiriavaleriopsi
+                            </a>
+                        </div>
+
                         <div className="flex justify-center gap-4 mt-8">
                             <Button variant="primary" onClick={() => { setState(s => ({ ...s, view: 'test', answers: {} })); window.scrollTo(0,0); }} icon={Icons.Refresh}>Novo Teste</Button>
-                            <Button variant="secondary" onClick={() => setState(s => ({ ...s, view: 'history' }))} icon={Icons.History}>Ver Histórico</Button>
+                            <Button variant="outline" onClick={() => setState(s => ({ ...s, view: 'history' }))} icon={Icons.History}>Ver Histórico</Button>
                         </div>
                     </main>
                 )}
@@ -353,14 +387,80 @@ export default function App() {
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-2xl font-bold font-serif text-white">Histórico</h2>
                             <div className="flex gap-2">
-                                <Button variant="secondary" onClick={() => setState(s => ({ ...s, view: 'test' }))} icon={Icons.Back}>Voltar</Button>
+                                <Button variant="outline" onClick={() => setState(s => ({ ...s, view: 'test' }))} icon={Icons.Back}>Voltar</Button>
                                 <Button variant="danger" onClick={() => setState(s => ({ ...s, showClearModal: true }))} disabled={state.history.length === 0} icon={Icons.Trash}>Limpar</Button>
                             </div>
                         </div>
 
+                        {/* Gráfico de Evolução */}
+                        {historyChartData.length > 1 && (
+                            <Card className="mb-8 bg-cda-card border border-cda-gold/30">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="font-bold text-lg text-cda-gold">Evolução da Ansiedade</h3>
+                                    <div className="flex gap-2 text-[10px] uppercase font-bold text-gray-400">
+                                        <span className="flex items-center"><span className="w-2 h-2 rounded-full bg-emerald-400 mr-1"></span>Estável</span>
+                                        <span className="flex items-center"><span className="w-2 h-2 rounded-full bg-yellow-400 mr-1"></span>Alerta</span>
+                                        <span className="flex items-center"><span className="w-2 h-2 rounded-full bg-red-400 mr-1"></span>Crítico</span>
+                                    </div>
+                                </div>
+                                <div className="h-64 w-full">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <AreaChart data={historyChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                            <defs>
+                                                <linearGradient id="splitColorStroke" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="0" stopColor="#EF4444" stopOpacity={1} />
+                                                    <stop offset={off.critico} stopColor="#EF4444" stopOpacity={1} />
+                                                    <stop offset={off.critico} stopColor="#FBBF24" stopOpacity={1} />
+                                                    <stop offset={off.alerta} stopColor="#FBBF24" stopOpacity={1} />
+                                                    <stop offset={off.alerta} stopColor="#34D399" stopOpacity={1} />
+                                                    <stop offset="1" stopColor="#34D399" stopOpacity={1} />
+                                                </linearGradient>
+                                                
+                                                <linearGradient id="splitColorFill" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="0" stopColor="#EF4444" stopOpacity={0.4} />
+                                                    <stop offset={off.critico} stopColor="#EF4444" stopOpacity={0.4} />
+                                                    <stop offset={off.critico} stopColor="#FBBF24" stopOpacity={0.4} />
+                                                    <stop offset={off.alerta} stopColor="#FBBF24" stopOpacity={0.4} />
+                                                    <stop offset={off.alerta} stopColor="#34D399" stopOpacity={0.4} />
+                                                    <stop offset="1" stopColor="#34D399" stopOpacity={0.1} />
+                                                </linearGradient>
+                                            </defs>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
+                                            <XAxis 
+                                                dataKey="shortDate" 
+                                                stroke="#D4AF37" 
+                                                tick={{fontSize: 12}} 
+                                                tickLine={false}
+                                                axisLine={false}
+                                                dy={10}
+                                            />
+                                            <YAxis 
+                                                domain={[0, 75]} 
+                                                stroke="#D4AF37" 
+                                                tick={{fontSize: 12}} 
+                                                tickLine={false}
+                                                axisLine={false}
+                                            />
+                                            <Tooltip content={<CustomTooltip />} cursor={{stroke: '#D4AF37', strokeWidth: 1, strokeDasharray: '4 4'}} />
+                                            <ReferenceLine y={30} stroke="#FBBF24" strokeDasharray="3 3" strokeOpacity={0.5} label={{value: "Alerta", fill: "#D97706", fontSize: 10, position: "insideRight"}} />
+                                            <ReferenceLine y={60} stroke="#EF4444" strokeDasharray="3 3" strokeOpacity={0.5} label={{value: "Crítico", fill: "#B91C1C", fontSize: 10, position: "insideRight"}} />
+                                            <Area 
+                                                type="monotone" 
+                                                dataKey="totalScore" 
+                                                stroke="url(#splitColorStroke)" 
+                                                strokeWidth={3}
+                                                fill="url(#splitColorFill)" 
+                                                activeDot={{ r: 6, strokeWidth: 2, stroke: '#fff' }}
+                                            />
+                                        </AreaChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </Card>
+                        )}
+
                         <div className="space-y-4">
                             {state.history.length === 0 && (
-                                <div className="text-center py-12 text-cda-muted bg-cda-card rounded-xl border border-dashed border-cda-greenLight">
+                                <div className="text-center py-12 text-cda-muted bg-cda-card rounded-xl border border-dashed border-cda-gold/30">
                                     Nenhum registro encontrado.
                                 </div>
                             )}
@@ -368,18 +468,18 @@ export default function App() {
                                 <div 
                                     key={h.id} 
                                     onClick={() => { setState(s => ({ ...s, result: h, view: 'result' })); window.scrollTo(0,0); }}
-                                    className="bg-cda-card p-5 rounded-xl border border-cda-greenLight/30 shadow-sm hover:shadow-md hover:border-cda-gold transition-all cursor-pointer flex justify-between items-center group"
+                                    className="bg-cda-card p-5 rounded-xl border border-white/10 shadow-sm hover:shadow-md hover:border-cda-gold transition-all cursor-pointer flex justify-between items-center group"
                                 >
                                     <div>
-                                        <div className="font-bold text-xl mb-1" style={{ color: h.totalScore > 45 ? '#FCA5A5' : (h.totalScore < 16 ? '#6EE7B7' : THEME.gold) }}>
+                                        <div className="font-bold text-xl mb-1" style={{ color: h.totalScore > 45 ? '#EF4444' : (h.totalScore < 16 ? '#34D399' : '#FBBF24') }}>
                                             {h.totalScore} pts
                                         </div>
-                                        <div className="text-xs text-cda-muted">
+                                        <div className="text-xs text-gray-400">
                                             {new Date(h.date as string).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <div className="text-sm font-medium text-white/80 group-hover:text-white">{h.level}</div>
+                                        <div className="text-sm font-medium text-gray-300 group-hover:text-white">{h.level}</div>
                                     </div>
                                 </div>
                             ))}
@@ -389,9 +489,9 @@ export default function App() {
             </div>
 
             {/* Footer */}
-            <footer className="py-8 text-center border-t border-cda-greenLight/20 mt-auto bg-black/10">
+            <footer className="py-8 text-center border-t border-white/10 mt-auto bg-black/10">
                 <p className="font-serif text-cda-gold mb-1 font-bold tracking-wide">CDA — Curando as Dores da Alma</p>
-                <p className="text-xs text-cda-muted opacity-60">&copy; {new Date().getFullYear()} • Todos os direitos reservados</p>
+                <p className="text-xs text-gray-400 opacity-80">&copy; {new Date().getFullYear()} • Todos os direitos reservados</p>
             </footer>
 
             {/* Modal Clear History */}
@@ -400,7 +500,7 @@ export default function App() {
                     title="Apagar Histórico?" 
                     onClose={
                         <div className="flex gap-2">
-                            <Button variant="secondary" onClick={() => setState(s => ({ ...s, showClearModal: false }))}>Cancelar</Button>
+                            <Button variant="outline" onClick={() => setState(s => ({ ...s, showClearModal: false }))}>Cancelar</Button>
                             <Button variant="danger" onClick={clearHistory}>Sim, Apagar</Button>
                         </div>
                     }

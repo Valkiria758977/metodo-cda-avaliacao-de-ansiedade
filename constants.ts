@@ -13,12 +13,12 @@ export const URL_DA_LOGO = "https://lh3.googleusercontent.com/d/1N_ZZ3zt59n5Qom0
 export const THEME = {
     green: '#1B4D3E',
     greenLight: '#2C6E58',
-    card: '#235C4B',
+    card: '#235C4B', // Dark Green Card
     gold: '#D4AF37',
-    bg: '#1B4D3E',
+    bg: '#1B4D3E', // Dark Green Background
     white: '#FFFFFF',
-    text: '#FFFFFF',
-    muted: '#A7F3D0',
+    text: '#FFFFFF', // White text
+    muted: '#D1D5DB', // Light Gray text
     danger: '#EF4444'
 };
 
@@ -61,9 +61,9 @@ export const TEST_DATA: QuestionBlock[] = [
 ];
 
 export const INTERPRETATION_RANGES: Interpretation[] = [
-    { min: 0, max: 15, level: 'Estado Emocional Estável', colorBg: '#064E3B', colorText: '#6EE7B7', suggestions: 'Você apresenta sinais de boa regulação emocional. Recomenda-se manter hábitos saudáveis e intervenções preventivas.' },
-    { min: 16, max: 30, level: 'Ansiedade Inicial (nível adaptativo)', colorBg: '#422006', colorText: '#FDE047', suggestions: 'Há sinais de alerta. Indica sobrecarga emocional e padrões mentais que precisam ser reorganizados. Sugestões CDA: respiração dirigida, reconstrução de crenças, e treino de presença.' },
-    { min: 31, max: 45, level: 'Ansiedade Moderada (estado de ameaça interna)', colorBg: '#7C2D12', colorText: '#FFEDD5', suggestions: 'A ansiedade já afeta decisões, humor e corpo. Recomenda-se intervenção terapêutica estruturada. Sugestões CDA: regulação somática, mapeamento de gatilhos, ensaio mental, neuro-ressignificação.' },
-    { min: 46, max: 60, level: 'Ansiedade Elevada (ciclo ativo de estresse)', colorBg: '#7F1D1D', colorText: '#FECACA', suggestions: 'A ansiedade já domina rotina e relações. Alta necessidade de acompanhamento terapêutico. Sugestões CDA: protocolos intensivos de aterramento, ressignificação guiada, intervenção em crenças-raiz.' },
-    { min: 61, max: 75, level: 'Ansiedade Grave (estado de hiperalerta constante)', colorBg: '#450A0A', colorText: '#FCA5A5', suggestions: 'Há sinais profundos de desconexão emocional, mental e corporal. Requer intervenção imediata e contínua. Sugestões CDA: tratamento emocional profundo, estabilização, e reconstrução identitária.' }
+    { min: 0, max: 15, level: 'Estado Emocional Estável', colorBg: '#ECFDF5', colorText: '#065F46', suggestions: 'Você apresenta sinais de boa regulação emocional. Recomenda-se manter hábitos saudáveis e intervenções preventivas.' },
+    { min: 16, max: 30, level: 'Ansiedade Inicial (nível adaptativo)', colorBg: '#FEFCE8', colorText: '#854D0E', suggestions: 'Indica sobrecarga emocional e padrões mentais que precisam ser reorganizados. Sugestão CDA: Procure a ajuda de um bom terapeuta.' },
+    { min: 31, max: 45, level: 'Ansiedade Moderada (estado de ameaça interna)', colorBg: '#FFF7ED', colorText: '#9A3412', suggestions: 'A ansiedade já afeta decisões, humor e corpo. Sugestão CDA: Procure a ajuda de um bom terapeuta.' },
+    { min: 46, max: 60, level: 'Ansiedade Elevada (ciclo ativo de estresse)', colorBg: '#FEF2F2', colorText: '#991B1B', suggestions: 'A ansiedade já domina rotina e relações. Sugestão CDA: Procure a ajuda de um bom terapeuta.' },
+    { min: 61, max: 75, level: 'Ansiedade Grave (estado de hiperalerta constante)', colorBg: '#FEF2F2', colorText: '#991B1B', suggestions: 'Há sinais profundos de desconexão emocional, mental e corporal. Sugestão CDA: Procure a ajuda de um bom terapeuta.' }
 ];

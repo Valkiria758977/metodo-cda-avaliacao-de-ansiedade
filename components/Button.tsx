@@ -3,7 +3,7 @@ import React from 'react';
 interface ButtonProps {
     children: React.ReactNode;
     onClick: () => void;
-    variant?: 'primary' | 'secondary' | 'danger';
+    variant?: 'primary' | 'secondary' | 'outline' | 'danger';
     disabled?: boolean;
     icon?: React.ComponentType;
     className?: string;
@@ -18,10 +18,15 @@ export const Button: React.FC<ButtonProps> = ({ children, onClick, variant = 'pr
             variantStyle = "bg-cda-gold text-cda-green border border-cda-gold hover:bg-white hover:border-white";
             break;
         case 'secondary':
+            // Texto Branco (para barra fixa ou fundos escuros)
+            variantStyle = "bg-transparent text-white border border-white/30 hover:bg-white/10 hover:border-white";
+            break;
+        case 'outline':
+            // Texto Branco (para corpo da página em fundo verde escuro)
             variantStyle = "bg-transparent text-white border border-white/30 hover:bg-white/10 hover:border-white";
             break;
         case 'danger':
-            variantStyle = "bg-transparent text-red-300 border border-red-500/50 hover:bg-red-900/20 hover:border-red-400";
+            variantStyle = "bg-white text-red-600 border border-red-200 hover:bg-red-50 hover:border-red-500";
             break;
     }
 
